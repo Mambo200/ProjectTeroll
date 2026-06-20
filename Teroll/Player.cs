@@ -11,6 +11,9 @@ namespace Teroll
 {
     public class Player
     {
+        private bool _jumpPressedLastFrame = false;
+        private float _jumpCutMultiplier = 0.95f; // wie stark der Sprung gekürzt wird
+
         private Texture2D _texture;
         private Vector2 _position;
         private Vector2 _velocity;
@@ -45,18 +48,32 @@ namespace Teroll
             else
                 _velocity.X = 0; // Sofort stehen bleiben
 
-            // --- Jump ---
-            if (k.IsKeyDown(Keys.Space) && _isOnGround)
+            // --- Jump Input ---
+            bool jumpPressed = k.IsKeyDown(Keys.Space);
+
+            // 1) Neuer Sprung (Boden oder Double-Jump)
+            if (jumpPressed && !_jumpPressedLastFrame)
             {
-                _velocity.Y = _jumpStrength;
-                _isOnGround = false;
-                _jumpsLeft = 1; // Double-Jump übrig
+                if (_isOnGround)
+                {
+                    _velocity.Y = _jumpStrength;
+                    _isOnGround = false;
+                    _jumpsLeft = 1; // Double-Jump übrig
+                }
+                else if (_jumpsLeft > 0)
+                {
+                    _velocity.Y = _jumpStrength;
+                    _jumpsLeft--;
+                }
             }
-            else if (k.IsKeyDown(Keys.Space) && _jumpsLeft > 0 && _velocity.Y > 0)
+
+            // 2) Variable Sprunghöhe (Taste loslassen = Sprung kürzen)
+            if (!jumpPressed && _velocity.Y < 0)
             {
-                _velocity.Y = _jumpStrength;
-                _jumpsLeft--;
+                _velocity.Y *= _jumpCutMultiplier;
             }
+
+            _jumpPressedLastFrame = jumpPressed;
 
             // --- Gravity ---
             _velocity.Y += _gravity * dt;
