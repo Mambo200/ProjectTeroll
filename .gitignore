@@ -308,14 +308,4 @@ __pycache__/
 OpenCover/
 
 # Custom stuff
-GameServer/Settings/GameInfo.json
-GameServerConsole/Settings/GameInfo.json
-GameServerConsole/Settings/GameServerSettings.json
-MigrationBackup/
-
-PDF_Combiner/bin/Debug/
-PDF_Combiner/bin/Release/
-
-PDF_Combiner/obj/Debug/
-
-PDF_Combiner/obj/Release/
+GDD.txt
