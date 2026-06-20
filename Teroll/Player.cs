@@ -93,7 +93,7 @@ namespace Teroll
                 _isOnGround = true;
             }
 
-            Derbug.SetText(((int)(_velocity.Y)).ToString());
+            Derbug.SetText(_position.ToString());
         }
 
         public void Draw(SpriteBatch spriteBatch)

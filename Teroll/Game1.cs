@@ -13,6 +13,8 @@ namespace Teroll
         public Player Player { get; private set; }
         private Texture2D _playerTexture;
 
+        private Texture2D _testTile;
+
 #if DEBUG
         private SpriteFont _debugFont;
 #endif
@@ -32,7 +34,17 @@ namespace Teroll
             {
                 TargetElapsedTime = TimeSpan.FromSeconds(1d / mInfo.Value.refreshRate);
             }
-            
+
+            // Celeste
+            //_graphics.PreferredBackBufferWidth = 1280;
+            //_graphics.PreferredBackBufferHeight = 736;
+
+            // IWBTG
+            _graphics.PreferredBackBufferWidth = Tilemap.TileSize * Tilemap.ScreenWidthTiles;
+            _graphics.PreferredBackBufferHeight = Tilemap.TileSize * Tilemap.ScreenHeightTiles;
+            //Window.AllowUserResizing = true;
+
+
             _graphics.SynchronizeWithVerticalRetrace = true;
             _graphics.ApplyChanges();
 
@@ -46,6 +58,8 @@ namespace Teroll
             // TODO: use this.Content to load your game content here
             _playerTexture = Content.Load<Texture2D>("Player\\Player");
             Player = new Player(_playerTexture, new Vector2(100, 100));
+            
+            _testTile = Content.Load<Texture2D>("Tiles\\slice03_03");
 
 #if DEBUG
             _debugFont = Content.Load<SpriteFont>("Derbug\\DebugFont");
@@ -85,6 +99,14 @@ namespace Teroll
             _spriteBatch.Begin();
 
             Player.Draw(_spriteBatch);
+
+            // Tiles
+            for (int i = 0; i < 20; i++)
+            {
+                float scale = 1f;
+                //_spriteBatch.Draw(_testTile, new Vector2(i * 32, 432), Color.White);
+                _spriteBatch.Draw(_testTile, new Vector2(i * 32 * scale, 432), null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+            }
 #if DEBUG
             double currentFPS = 1 / gameTime.ElapsedGameTime.TotalSeconds;
             string toShow = string.Empty;
