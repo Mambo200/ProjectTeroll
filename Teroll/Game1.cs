@@ -27,7 +27,11 @@ namespace Teroll
         {
             // TODO: Add your initialization logic here
             IsFixedTimeStep = true;
-            //TargetElapsedTime = TimeSpan.FromSeconds(1d / 60);
+            Helper.Monitor.MonitorInfo? mInfo = Helper.Monitor.GetCurrentMonitorInfo(this.Window.Handle);
+            if(mInfo != null)
+            {
+                TargetElapsedTime = TimeSpan.FromSeconds(1d / mInfo.Value.refreshRate);
+            }
             
             _graphics.SynchronizeWithVerticalRetrace = true;
             _graphics.ApplyChanges();
@@ -44,7 +48,7 @@ namespace Teroll
             Player = new Player(_playerTexture, new Vector2(100, 100));
 
 #if DEBUG
-            _debugFont = Content.Load<SpriteFont>("Debug\\DebugFont");
+            _debugFont = Content.Load<SpriteFont>("Derbug\\DebugFont");
 #endif
         }
 
@@ -52,6 +56,8 @@ namespace Teroll
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+
+
 #if DEBUG
             if (Keyboard.GetState().IsKeyDown(Keys.R))
             {
@@ -79,13 +85,16 @@ namespace Teroll
             Player.Draw(_spriteBatch);
 #if DEBUG
             double currentFPS = 1 / gameTime.ElapsedGameTime.TotalSeconds;
-            if(currentFPS > maxFPS)
+            string toShow = string.Empty;
+            Helper.Monitor.MonitorInfo? mInfo = Helper.Monitor.GetCurrentMonitorInfo(this.Window.Handle);
+            toShow = mInfo == null ? string.Empty : Helper.Monitor.ConvertToString(mInfo.Value);
+            if (currentFPS > maxFPS)
                 maxFPS = currentFPS;
             if(currentFPS < minFPS)
                 minFPS = currentFPS;
             _spriteBatch.DrawString(
                 _debugFont,
-                "Current " + ((int)(1 / gameTime.ElapsedGameTime.TotalSeconds)).ToString() + "\nMin " + ((int)minFPS).ToString() + "\nMax " + ((int)maxFPS).ToString(),
+                currentFPS.ToString(),
                 new Vector2(10, 10),
                 Color.White);
 #endif
