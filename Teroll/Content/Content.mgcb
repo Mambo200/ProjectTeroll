@@ -20,13 +20,6 @@
 /processorParam:TextureFormat=Compressed
 /build:Derbug/DebugFont.spritefont
 
-#begin Derbug/DebugFont.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:Derbug/DebugFont.spritefont
-
 #begin Player/Player.png
 /importer:TextureImporter
 /processor:TextureProcessor
