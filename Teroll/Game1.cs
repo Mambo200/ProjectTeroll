@@ -49,7 +49,9 @@ namespace Teroll
 
 #if DEBUG
             _debugFont = Content.Load<SpriteFont>("Derbug\\DebugFont");
+            Derbug.Init(_spriteBatch, _debugFont);
 #endif
+
         }
 
         protected override void Update(GameTime gameTime)
@@ -92,11 +94,13 @@ namespace Teroll
                 maxFPS = currentFPS;
             if(currentFPS < minFPS)
                 minFPS = currentFPS;
-            _spriteBatch.DrawString(
-                _debugFont,
-                currentFPS.ToString(),
-                new Vector2(10, 10),
-                Color.White);
+            //_spriteBatch.DrawString(
+            //    _debugFont,
+            //    currentFPS.ToString(),
+            //    new Vector2(10, 10),
+            //    Color.White);
+            //Derbug.SetText(currentFPS.ToString());
+            Derbug.Draw();
 #endif
 
             _spriteBatch.End();

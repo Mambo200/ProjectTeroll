@@ -68,10 +68,13 @@ namespace Teroll
             }
 
             // 2) Variable Sprunghöhe (Taste loslassen = Sprung kürzen)
+            // Variable Sprunghöhe: Taste loslassen = Aufwärtsbewegung abbremsen
             if (!jumpPressed && _velocity.Y < 0)
             {
-                _velocity.Y *= _jumpCutMultiplier;
+                // sanftes Abbremsen der Aufwärtsbewegung
+                _velocity.Y += 20f; // je höher, desto stärker wird der Sprung gekürzt
             }
+
 
             _jumpPressedLastFrame = jumpPressed;
 
@@ -89,6 +92,8 @@ namespace Teroll
                 _velocity.Y = 0;
                 _isOnGround = true;
             }
+
+            Derbug.SetText(((int)(_velocity.Y)).ToString());
         }
 
         public void Draw(SpriteBatch spriteBatch)
