@@ -44,7 +44,7 @@ namespace Teroll
             Player = new Player(_playerTexture, new Vector2(100, 100));
 
 #if DEBUG
-            _debugFont = Content.Load<SpriteFont>("Debug\\DebugFont");
+            _debugFont = Content.Load<SpriteFont>("Derbug\\DebugFont");
 #endif
         }
 
@@ -52,6 +52,8 @@ namespace Teroll
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+
+
 #if DEBUG
             if (Keyboard.GetState().IsKeyDown(Keys.R))
             {
@@ -85,7 +87,8 @@ namespace Teroll
                 minFPS = currentFPS;
             _spriteBatch.DrawString(
                 _debugFont,
-                "Current " + ((int)(1 / gameTime.ElapsedGameTime.TotalSeconds)).ToString() + "\nMin " + ((int)minFPS).ToString() + "\nMax " + ((int)maxFPS).ToString(),
+                //"Current " + ((int)(1 / gameTime.ElapsedGameTime.TotalSeconds)).ToString() + "\nMin " + ((int)minFPS).ToString() + "\nMax " + ((int)maxFPS).ToString(),
+                Helper.Monitor.GetCurrentMonitorInfo(this.Window.Handle),
                 new Vector2(10, 10),
                 Color.White);
 #endif
