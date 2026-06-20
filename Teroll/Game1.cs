@@ -27,7 +27,11 @@ namespace Teroll
         {
             // TODO: Add your initialization logic here
             IsFixedTimeStep = true;
-            //TargetElapsedTime = TimeSpan.FromSeconds(1d / 60);
+            Helper.Monitor.MonitorInfo? mInfo = Helper.Monitor.GetCurrentMonitorInfo(this.Window.Handle);
+            if(mInfo != null)
+            {
+                TargetElapsedTime = TimeSpan.FromSeconds(1d / mInfo.Value.refreshRate);
+            }
             
             _graphics.SynchronizeWithVerticalRetrace = true;
             _graphics.ApplyChanges();
@@ -81,14 +85,16 @@ namespace Teroll
             Player.Draw(_spriteBatch);
 #if DEBUG
             double currentFPS = 1 / gameTime.ElapsedGameTime.TotalSeconds;
-            if(currentFPS > maxFPS)
+            string toShow = string.Empty;
+            Helper.Monitor.MonitorInfo? mInfo = Helper.Monitor.GetCurrentMonitorInfo(this.Window.Handle);
+            toShow = mInfo == null ? string.Empty : Helper.Monitor.ConvertToString(mInfo.Value);
+            if (currentFPS > maxFPS)
                 maxFPS = currentFPS;
             if(currentFPS < minFPS)
                 minFPS = currentFPS;
             _spriteBatch.DrawString(
                 _debugFont,
-                //"Current " + ((int)(1 / gameTime.ElapsedGameTime.TotalSeconds)).ToString() + "\nMin " + ((int)minFPS).ToString() + "\nMax " + ((int)maxFPS).ToString(),
-                Helper.Monitor.GetCurrentMonitorInfo(this.Window.Handle),
+                currentFPS.ToString(),
                 new Vector2(10, 10),
                 Color.White);
 #endif

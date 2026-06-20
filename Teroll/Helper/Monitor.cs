@@ -9,7 +9,7 @@ namespace Teroll.Helper
 {
     public class Monitor
     {
-        public static string GetCurrentMonitorInfo(IntPtr _handle)
+        public static MonitorInfo? GetCurrentMonitorInfo(IntPtr _handle)
         {
             
             // 1. Get the window handle ("HWND" in Win32 parlance)
@@ -20,7 +20,7 @@ namespace Teroll.Helper
             IntPtr hmonitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
             if (hmonitor == IntPtr.Zero)
             {
-                return "MonitorFromWindow returned NULL ☹";
+                return null;
             }
 
             // 3. Get more information about the monitor.
@@ -30,7 +30,7 @@ namespace Teroll.Helper
             bool bResult = GetMonitorInfoW(hmonitor, ref monitorInfo);
             if (!bResult)
             {
-                return "GetMonitorInfoW returned FALSE ☹";
+                return null;
             }
 
             // 4. Get the current display settings for that monitor, which includes the resolution and refresh rate.
@@ -40,11 +40,35 @@ namespace Teroll.Helper
             bResult = EnumDisplaySettingsW(monitorInfo.szDevice, ENUM_CURRENT_SETTINGS, out devMode);
             if (!bResult)
             {
-                return "EnumDisplaySettingsW returned FALSE ☹";
+                return null;
             }
 
             // Done!
-            return string.Format("{0} x {1} @ {2}hz", devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmDisplayFrequency);
+            //return string.Format("{0} x {1} @ {2}hz", devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmDisplayFrequency);
+            return new MonitorInfo(devMode.dmPelsWidth, devMode.dmPelsHeight, devMode.dmDisplayFrequency);
+        }
+
+        public static string ConvertToString(MonitorInfo _info)
+        {
+            return string.Format("{0} x {1} @ {2}hz", _info.width, _info.height, _info.refreshRate);
+        }
+        public struct MonitorInfo
+        {
+            public MonitorInfo(uint _width, uint _height, uint _refreshRate)
+            {
+                width = _width;
+                height = _height;
+                refreshRate = _refreshRate;
+            }
+            private MonitorInfo(DEVMODEW _devMode)
+            {
+                width = _devMode.dmPelsWidth;
+                height = _devMode.dmPelsHeight;
+                refreshRate = _devMode.dmDisplayFrequency;
+            }
+            public uint width;
+            public uint height;
+            public uint refreshRate;
         }
 
 
