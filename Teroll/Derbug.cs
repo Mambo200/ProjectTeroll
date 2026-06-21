@@ -24,11 +24,13 @@ namespace Teroll
 
         public static void Draw()
         {
+#if DEBUG
             batch.DrawString(
                 font,
                 text,
                 new Vector2(10, 10),
                 Color.White);
+#endif
         }
     }
 }

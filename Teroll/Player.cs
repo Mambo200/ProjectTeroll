@@ -6,11 +6,25 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Teroll.Tiles;
 
 namespace Teroll
 {
     public class Player
     {
+        public Rectangle Collider
+        {
+            get
+            {
+                return new Rectangle(
+                    (int)_position.X,
+                    (int)_position.Y,
+                    16,
+                    32
+                    );
+            }
+        }
+
         private bool _jumpPressedLastFrame = false;
         private float _jumpCutMultiplier = 0.95f; // wie stark der Sprung gekürzt wird
 
@@ -26,6 +40,7 @@ namespace Teroll
 
         private bool _isOnGround = false;
         private int _jumpsLeft = 2;            // Double-Jump
+        public int maxJumpsAvailable = 2;
 
         public Player(Texture2D texture, Vector2 startPos)
         {
@@ -33,7 +48,7 @@ namespace Teroll
             _position = startPos;
         }
 
-        public void Update(GameTime gameTime)
+        public void Update(GameTime gameTime, Tilemap map)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             var k = Keyboard.GetState();
@@ -46,19 +61,18 @@ namespace Teroll
             else if (k.IsKeyDown(Keys.Right))
                 _velocity.X = speed;
             else
-                _velocity.X = 0; // Sofort stehen bleiben
+                _velocity.X = 0;
 
             // --- Jump Input ---
             bool jumpPressed = k.IsKeyDown(Keys.Space);
 
-            // 1) Neuer Sprung (Boden oder Double-Jump)
             if (jumpPressed && !_jumpPressedLastFrame)
             {
                 if (_isOnGround)
                 {
                     _velocity.Y = _jumpStrength;
                     _isOnGround = false;
-                    _jumpsLeft = 1; // Double-Jump übrig
+                    _jumpsLeft--;
                 }
                 else if (_jumpsLeft > 0)
                 {
@@ -67,39 +81,110 @@ namespace Teroll
                 }
             }
 
-            // 2) Variable Sprunghöhe (Taste loslassen = Sprung kürzen)
-            // Variable Sprunghöhe: Taste loslassen = Aufwärtsbewegung abbremsen
+            // Variable Sprunghöhe
             if (!jumpPressed && _velocity.Y < 0)
-            {
-                // sanftes Abbremsen der Aufwärtsbewegung
-                _velocity.Y += 20f; // je höher, desto stärker wird der Sprung gekürzt
-            }
-
+                _velocity.Y += 20f;
 
             _jumpPressedLastFrame = jumpPressed;
 
-            // --- Gravity ---
-            _velocity.Y += _gravity * dt;
-            _velocity.Y = Math.Min(_velocity.Y, _maxYVelovity);
+            // ---------------------------------------------------------
+            // 1) Horizontal bewegen (OHNE Gravity)
+            // ---------------------------------------------------------
+            _position.X += _velocity.X * dt;
 
-            // --- Apply movement ---
-            _position += _velocity * dt;
-
-            // --- Simple ground collision (Test) ---
-            if (_position.Y >= 400)
+            var tileX = GetCollidingTile(Collider, map);
+            if (tileX != null)
             {
-                _position.Y = 400;
-                _velocity.Y = 0;
-                _isOnGround = true;
+                if (_velocity.X > 0)
+                    _position.X = tileX.Collider.Left - Collider.Width;
+                else if (_velocity.X < 0)
+                    _position.X = tileX.Collider.Right;
+
+                _velocity.X = 0;
             }
 
-            Derbug.SetText(_position.ToString());
+            // ---------------------------------------------------------
+            // 2) Vertikal bewegen (OHNE Gravity)
+            // ---------------------------------------------------------
+            _position.Y += _velocity.Y * dt;
+
+            var tileY = GetCollidingTile(Collider, map);
+            if (tileY != null)
+            {
+                if (_velocity.Y > 0)
+                {
+                    // normal landen
+                    _position.Y = tileY.Collider.Top - Collider.Height;
+                    _isOnGround = true;
+                    _jumpsLeft = maxJumpsAvailable;
+                }
+                else if (_velocity.Y < 0)
+                {
+                    // Kopf stößt an Decke
+                    _position.Y = tileY.Collider.Bottom;
+                }
+
+                _velocity.Y = 0;
+            }
+            else
+            {
+                // kein direkter Kontakt → prüfen, ob wir knapp über dem Boden sind
+                const int snapDistance = 3; // Toleranz in Pixeln
+
+                Rectangle probe = Collider;
+                probe.Y += snapDistance;
+
+                var snapTile = GetCollidingTile(probe, map);
+
+                if (snapTile != null && _velocity.Y >= 0)
+                {
+                    // wir sind maximal snapDistance über dem Boden → hart aufsetzen
+                    _position.Y = snapTile.Collider.Top - Collider.Height;
+                    _isOnGround = true;
+                    _velocity.Y = 0;
+                    _jumpsLeft = maxJumpsAvailable;
+                }
+                else
+                {
+                    if (_isOnGround)
+                        _jumpsLeft--;
+                    _isOnGround = false;
+                }
+            }
+
+            // ---------------------------------------------------------
+            // 3) Gravity NACH der Kollision anwenden
+            // ---------------------------------------------------------
+            if (!_isOnGround)
+            {
+                _velocity.Y += _gravity * dt;
+                _velocity.Y = Math.Min(_velocity.Y, _maxYVelovity);
+            }
+            else
+            {
+                _velocity.Y = 0; // WICHTIG: verhindert das Flackern
+            }
+
+            Derbug.SetText(_isOnGround.ToString() + " | " + _jumpsLeft.ToString() + " | " + ((int)_velocity.Y).ToString());
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(_texture, _position, Color.White);
+            spriteBatch.Draw(_texture, _position, null, Color.White, 0f, Vector2.Zero, new Vector2(.5f,1), SpriteEffects.None, 0);
 
         }
+
+        private Tile GetCollidingTile(Rectangle rect, Tilemap map)
+        {
+            foreach (var tile in map.GetNearbyTiles(rect))
+            {
+                if (tile.IsSolid && rect.Intersects(tile.Collider))
+                    return tile;
+            }
+
+            return null;
+        }
+
+
     }
 }
