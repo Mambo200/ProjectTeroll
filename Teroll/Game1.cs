@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using Teroll.Tiles;
 
 namespace Teroll
 {
@@ -13,9 +14,12 @@ namespace Teroll
         public Player Player { get; private set; }
         private Texture2D _playerTexture;
 
+        private Texture2D _testTile;
+
 #if DEBUG
         private SpriteFont _debugFont;
 #endif
+        private Tilemap _map;
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -28,13 +32,47 @@ namespace Teroll
             // TODO: Add your initialization logic here
             IsFixedTimeStep = true;
             Helper.Monitor.MonitorInfo? mInfo = Helper.Monitor.GetCurrentMonitorInfo(this.Window.Handle);
-            if(mInfo != null)
+            if (mInfo != null)
             {
                 TargetElapsedTime = TimeSpan.FromSeconds(1d / mInfo.Value.refreshRate);
             }
-            
+
+            // Celeste
+            //_graphics.PreferredBackBufferWidth = 1280;
+            //_graphics.PreferredBackBufferHeight = 736;
+
+            // IWBTG
+            _graphics.PreferredBackBufferWidth = Tilemap.TileSize * Tilemap.ScreenWidthTiles;
+            _graphics.PreferredBackBufferHeight = Tilemap.TileSize * Tilemap.ScreenHeightTiles;
+            //Window.AllowUserResizing = true;
+
+
             _graphics.SynchronizeWithVerticalRetrace = true;
             _graphics.ApplyChanges();
+
+            int[,] level =
+            {
+                { 1, 1,1, 1,1, 1,1, 1,0, 1,1, 1,0, 0,0, 1,1, 1,1, 1,1, 1,1, 1,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 1,1, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 1,1, 1,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1, 0,0, 0,0, 0,0, 1,1, 1,1, 1,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1, 0,0, 1,1, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,0, 0,1 },
+                { 1, 1,1, 1,1, 1,1, 1,0, 1,1, 1,0, 0,0, 1,1, 1,1, 1,1, 1,1, 1,1 },
+                { 1, 1,1, 1,1, 1,1, 1,0, 1,1, 1,0, 0,0, 1,1, 1,1, 1,1, 1,1, 1,1 }
+            };
+            _map = new Tilemap(level);
 
             base.Initialize();
         }
@@ -46,6 +84,8 @@ namespace Teroll
             // TODO: use this.Content to load your game content here
             _playerTexture = Content.Load<Texture2D>("Player\\Player");
             Player = new Player(_playerTexture, new Vector2(100, 100));
+
+            _testTile = Content.Load<Texture2D>("Tiles\\slice03_03");
 
 #if DEBUG
             _debugFont = Content.Load<SpriteFont>("Derbug\\DebugFont");
@@ -68,7 +108,7 @@ namespace Teroll
             }
 #endif
             // TODO: Add your update logic here
-            Player.Update(gameTime);
+            Player.Update(gameTime, _map);
 
             base.Update(gameTime);
         }
@@ -85,6 +125,9 @@ namespace Teroll
             _spriteBatch.Begin();
 
             Player.Draw(_spriteBatch);
+
+            // Tiles
+            _map.Draw(_spriteBatch, _testTile);
 #if DEBUG
             double currentFPS = 1 / gameTime.ElapsedGameTime.TotalSeconds;
             string toShow = string.Empty;
@@ -92,7 +135,7 @@ namespace Teroll
             toShow = mInfo == null ? string.Empty : Helper.Monitor.ConvertToString(mInfo.Value);
             if (currentFPS > maxFPS)
                 maxFPS = currentFPS;
-            if(currentFPS < minFPS)
+            if (currentFPS < minFPS)
                 minFPS = currentFPS;
             //_spriteBatch.DrawString(
             //    _debugFont,
