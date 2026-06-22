@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Teroll.Entitys;
 using Teroll.Tiles;
+using Teroll.Worlds;
 
 namespace Teroll
 {
-    public class Player
+    public class Player : Entity
     {
         public Rectangle Collider
         {
@@ -46,6 +48,11 @@ namespace Teroll
         {
             _texture = texture;
             _position = startPos;
+        }
+
+        public override void Update(GameTime gameTime, Level level)
+        {
+            Update(gameTime, level.ActiveScreen.Tilemap);
         }
 
         public void Update(GameTime gameTime, Tilemap map)
@@ -168,7 +175,7 @@ namespace Teroll
             Derbug.SetText(_isOnGround.ToString() + " | " + _jumpsLeft.ToString() + " | " + ((int)_velocity.Y).ToString());
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        public override void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(_texture, _position, null, Color.White, 0f, Vector2.Zero, new Vector2(.5f,1), SpriteEffects.None, 0);
 

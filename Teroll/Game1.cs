@@ -42,8 +42,8 @@ namespace Teroll
             //_graphics.PreferredBackBufferHeight = 736;
 
             // IWBTG
-            _graphics.PreferredBackBufferWidth = Tilemap.TileSize * Tilemap.ScreenWidthTiles;
-            _graphics.PreferredBackBufferHeight = Tilemap.TileSize * Tilemap.ScreenHeightTiles;
+            _graphics.PreferredBackBufferWidth = Tile.Size * Tilemap.ScreenWidthTiles;
+            _graphics.PreferredBackBufferHeight = Tile.Size * Tilemap.ScreenHeightTiles;
             //Window.AllowUserResizing = true;
 
 
@@ -127,7 +127,7 @@ namespace Teroll
             Player.Draw(_spriteBatch);
 
             // Tiles
-            _map.Draw(_spriteBatch, _testTile);
+            _map.Draw(_spriteBatch, Vector2.Zero, _testTile);
 #if DEBUG
             double currentFPS = 1 / gameTime.ElapsedGameTime.TotalSeconds;
             string toShow = string.Empty;
