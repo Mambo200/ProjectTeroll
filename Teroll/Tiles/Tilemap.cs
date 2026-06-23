@@ -9,6 +9,7 @@ namespace Teroll.Tiles
 {
     public class Tilemap
     {
+        public string DEBUGNAME;
         public Tile[,] Tiles;
         public const int ScreenWidthTiles = 25;
         public const int ScreenHeightTiles = 19;

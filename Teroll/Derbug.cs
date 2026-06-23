@@ -28,7 +28,7 @@ namespace Teroll
             batch.DrawString(
                 font,
                 text,
-                new Vector2(10, 10),
+                new Vector2(Game1.Get.testLevel.CameraPosition.X, Game1.Get.testLevel.CameraPosition.Y),
                 Color.White);
 #endif
         }

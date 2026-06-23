@@ -30,6 +30,13 @@ namespace Teroll.Worlds
             Screens = new Screen[screensX, screensY];
         }
 
+        public Vector2 CameraPosition =>
+            new Vector2(
+                CurrentScreenX * ScreenWidthPx,
+                CurrentScreenY * ScreenHeightPx
+            );
+
+
         public Screen ActiveScreen =>
             Screens[CurrentScreenX, CurrentScreenY];
 
@@ -37,7 +44,10 @@ namespace Teroll.Worlds
         {
             foreach (var e in GlobalEntities)
                 e.Update(gameTime, this);
+
+            TryScreenTransition(Game1.Get.Player);
         }
+
 
         public void Draw(SpriteBatch spriteBatch, Texture2D tileTexture)
         {
@@ -63,6 +73,69 @@ namespace Teroll.Worlds
             foreach (var e in GlobalEntities)
                 e.Draw(spriteBatch);
         }
+
+        public void TryScreenTransition(Player player)
+        {
+            float relativeX = player.Position.X - (CurrentScreenX * ScreenWidthPx);
+            float relativeY = player.Position.Y - (CurrentScreenY * ScreenHeightPx);
+
+            // --- Rechts raus ---
+            if (relativeX > ScreenWidthPx)
+            {
+                if (CurrentScreenX + 1 < ScreensX)
+                {
+                    CurrentScreenX++;
+                    player.Position.X = CurrentScreenX * ScreenWidthPx + 1;
+                }
+                else
+                {
+                    player.Position.X = CurrentScreenX * ScreenWidthPx + ScreenWidthPx - 1;
+                }
+            }
+
+            // --- Links raus ---
+            if (relativeX < 0)
+            {
+                if (CurrentScreenX - 1 >= 0)
+                {
+                    CurrentScreenX--;
+                    player.Position.X = (CurrentScreenX + 1) * ScreenWidthPx - player.Collider.Width - 1;
+                }
+                else
+                {
+                    player.Position.X = CurrentScreenX * ScreenWidthPx + 1;
+                }
+            }
+
+            // --- Unten raus ---
+            if (relativeY > ScreenHeightPx)
+            {
+                if (CurrentScreenY + 1 < ScreensY)
+                {
+                    CurrentScreenY++;
+                    player.Position.Y = CurrentScreenY * ScreenHeightPx + 1;
+                }
+                else
+                {
+                    player.Position.Y = CurrentScreenY * ScreenHeightPx + ScreenHeightPx - 1;
+                }
+            }
+
+            // --- Oben raus ---
+            if (relativeY < 0)
+            {
+                if (CurrentScreenY - 1 >= 0)
+                {
+                    CurrentScreenY--;
+                    player.Position.Y = (CurrentScreenY + 1) * ScreenHeightPx - player.Collider.Height - 1;
+                }
+                else
+                {
+                    player.Position.Y = CurrentScreenY * ScreenHeightPx + 1;
+                }
+            }
+        }
+
     }
 
 }
