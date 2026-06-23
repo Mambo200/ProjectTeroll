@@ -9,28 +9,51 @@ namespace Teroll.Tiles
 {
     public class Tilemap
     {
+        public string DEBUGNAME;
         public Tile[,] Tiles;
-        public const int TileSize = 32;
         public const int ScreenWidthTiles = 25;
         public const int ScreenHeightTiles = 19;
 
+        public int Height { get; private set; }
+        public int Width { get; private set; }
+
         public Tilemap(int[,] data)
         {
-            Tiles = new Tile[ScreenWidthTiles, ScreenHeightTiles];
+            Height = data.GetLength(0);
+            Width = data.GetLength(1);
 
-            for (int y = 0; y < ScreenHeightTiles; y++)
+            Tiles = new Tile[Width, Height];
+
+            for (int y = 0; y < Height; y++)
             {
-                for (int x = 0; x < ScreenWidthTiles; x++)
+                for (int x = 0; x < Width; x++)
                 {
-                    int value = data[y, x]; // hier der entscheidende Fix
+                    int value = data[y, x];
 
                     if (value == 1)
                         Tiles[x, y] = new SolidTile(x * Tile.Size, y * Tile.Size);
-                    else
-                        Tiles[x, y] = null;
                 }
             }
         }
+
+        public void Draw(SpriteBatch spriteBatch, Vector2 offset, Texture2D texture)
+        {
+            for (int y = 0; y < Height; y++)
+            {
+                for (int x = 0; x < Width; x++)
+                {
+                    Tile t = Tiles[x, y];
+                    if (t == null) continue;
+
+                    Rectangle dest = t.Collider;
+                    dest.X += (int)offset.X;
+                    dest.Y += (int)offset.Y;
+
+                    spriteBatch.Draw(texture, dest, Color.White);
+                }
+            }
+        }
+        
 
         public IEnumerable<Tile> GetNearbyTiles(Rectangle area)
         {
@@ -43,7 +66,7 @@ namespace Teroll.Tiles
             {
                 for (int x = left; x <= right; x++)
                 {
-                    if (x < 0 || y < 0 || x >= ScreenWidthTiles || y >= ScreenHeightTiles)
+                    if (x < 0 || y < 0 || x >= Width || y >= Height)
                         continue;
 
                     if (Tiles[x, y] != null)
@@ -51,21 +74,5 @@ namespace Teroll.Tiles
                 }
             }
         }
-
-        public void Draw(SpriteBatch spriteBatch, Texture2D solidTexture)
-        {
-            for (int y = 0; y < ScreenHeightTiles; y++)
-            {
-                for (int x = 0; x < ScreenWidthTiles; x++)
-                {
-                    Tile tile = Tiles[x, y];
-                    if (tile != null)
-                    {
-                        tile.Draw(spriteBatch, solidTexture);
-                    }
-                }
-            }
-        }
-
     }
 }

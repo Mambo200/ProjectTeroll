@@ -1,59 +1,70 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using Teroll.Entitys;
 using Teroll.Tiles;
+using Teroll.Worlds;
 
 namespace Teroll
 {
-    public class Player
+    public class Player : Entity
     {
-        public Rectangle Collider
-        {
-            get
-            {
-                return new Rectangle(
-                    (int)_position.X,
-                    (int)_position.Y,
-                    16,
-                    32
-                    );
-            }
-        }
-
-        private bool _jumpPressedLastFrame = false;
-        private float _jumpCutMultiplier = 0.95f; // wie stark der Sprung gekürzt wird
+        public Rectangle Collider =>
+            new Rectangle(
+                (int)Position.X,
+                (int)Position.Y,
+                16,
+                32
+            );
 
         private Texture2D _texture;
-        private Vector2 _position;
         private Vector2 _velocity;
 
-        private float _moveSpeed = 200f;       // Sofort Max-Speed
-        private float _slowSpeed = 100f;       // Shift gedrückt
+        private bool _jumpPressedLastFrame = false;
+
+        private float _moveSpeed = 200f;
+        private float _slowSpeed = 100f;
         private float _gravity = 900f;
-        private float _maxYVelovity = 500;
+        private float _maxYVelocity = 500f;
         private float _jumpStrength = -350f;
 
         private bool _isOnGround = false;
-        private int _jumpsLeft = 2;            // Double-Jump
+        private int _jumpsLeft = 2;
         public int maxJumpsAvailable = 2;
 
         public Player(Texture2D texture, Vector2 startPos)
         {
             _texture = texture;
-            _position = startPos;
+            Position = startPos;
         }
 
-        public void Update(GameTime gameTime, Tilemap map)
+        // ---------------------------------------------------------
+        //  UPDATE (Level → Player)
+        // ---------------------------------------------------------
+        public override void Update(GameTime gameTime, Level level)
+        {
+            Tilemap map = level.ActiveScreen.Tilemap;
+
+            Vector2 screenOffset = new Vector2(
+                level.CurrentScreenX * Level.ScreenWidthPx,
+                level.CurrentScreenY * Level.ScreenHeightPx
+            );
+
+            UpdateInternal(gameTime, map, screenOffset);
+        }
+
+        // ---------------------------------------------------------
+        //  INTERNES UPDATE (Tilemap + Offset)
+        // ---------------------------------------------------------
+        private void UpdateInternal(GameTime gameTime, Tilemap map, Vector2 screenOffset)
         {
             float dt = (float)gameTime.ElapsedGameTime.TotalSeconds;
             var k = Keyboard.GetState();
 
-            // --- Movement ---
+            // ---------------------------------------------------------
+            // Movement Input
+            // ---------------------------------------------------------
             float speed = k.IsKeyDown(Keys.LeftShift) ? _slowSpeed : _moveSpeed;
 
             if (k.IsKeyDown(Keys.Left))
@@ -63,7 +74,9 @@ namespace Teroll
             else
                 _velocity.X = 0;
 
-            // --- Jump Input ---
+            // ---------------------------------------------------------
+            // Jump Input
+            // ---------------------------------------------------------
             bool jumpPressed = k.IsKeyDown(Keys.Space);
 
             if (jumpPressed && !_jumpPressedLastFrame)
@@ -72,7 +85,7 @@ namespace Teroll
                 {
                     _velocity.Y = _jumpStrength;
                     _isOnGround = false;
-                    _jumpsLeft--;
+                    _jumpsLeft = maxJumpsAvailable - 1;
                 }
                 else if (_jumpsLeft > 0)
                 {
@@ -81,65 +94,60 @@ namespace Teroll
                 }
             }
 
-            // Variable Sprunghöhe
             if (!jumpPressed && _velocity.Y < 0)
                 _velocity.Y += 20f;
 
             _jumpPressedLastFrame = jumpPressed;
 
             // ---------------------------------------------------------
-            // 1) Horizontal bewegen (OHNE Gravity)
+            // 1) Horizontal Movement
             // ---------------------------------------------------------
-            _position.X += _velocity.X * dt;
+            Position.X += _velocity.X * dt;
 
-            var tileX = GetCollidingTile(Collider, map);
+            var tileX = GetCollidingTileLocal(map, screenOffset);
             if (tileX != null)
             {
                 if (_velocity.X > 0)
-                    _position.X = tileX.Collider.Left - Collider.Width;
+                    Position.X = tileX.Collider.Left + screenOffset.X - Collider.Width;
                 else if (_velocity.X < 0)
-                    _position.X = tileX.Collider.Right;
+                    Position.X = tileX.Collider.Right + screenOffset.X;
 
                 _velocity.X = 0;
             }
 
             // ---------------------------------------------------------
-            // 2) Vertikal bewegen (OHNE Gravity)
+            // 2) Vertical Movement
             // ---------------------------------------------------------
-            _position.Y += _velocity.Y * dt;
+            Position.Y += _velocity.Y * dt;
 
-            var tileY = GetCollidingTile(Collider, map);
+            var tileY = GetCollidingTileLocal(map, screenOffset);
             if (tileY != null)
             {
                 if (_velocity.Y > 0)
                 {
-                    // normal landen
-                    _position.Y = tileY.Collider.Top - Collider.Height;
+                    Position.Y = tileY.Collider.Top + screenOffset.Y - Collider.Height;
                     _isOnGround = true;
                     _jumpsLeft = maxJumpsAvailable;
                 }
                 else if (_velocity.Y < 0)
                 {
-                    // Kopf stößt an Decke
-                    _position.Y = tileY.Collider.Bottom;
+                    Position.Y = tileY.Collider.Bottom + screenOffset.Y;
                 }
 
                 _velocity.Y = 0;
             }
             else
             {
-                // kein direkter Kontakt → prüfen, ob wir knapp über dem Boden sind
-                const int snapDistance = 3; // Toleranz in Pixeln
+                const int snapDistance = 3;
 
                 Rectangle probe = Collider;
                 probe.Y += snapDistance;
 
-                var snapTile = GetCollidingTile(probe, map);
+                var snapTile = GetCollidingTileLocal(map, screenOffset, probe);
 
                 if (snapTile != null && _velocity.Y >= 0)
                 {
-                    // wir sind maximal snapDistance über dem Boden → hart aufsetzen
-                    _position.Y = snapTile.Collider.Top - Collider.Height;
+                    Position.Y = snapTile.Collider.Top + screenOffset.Y - Collider.Height;
                     _isOnGround = true;
                     _velocity.Y = 0;
                     _jumpsLeft = maxJumpsAvailable;
@@ -153,38 +161,46 @@ namespace Teroll
             }
 
             // ---------------------------------------------------------
-            // 3) Gravity NACH der Kollision anwenden
+            // 3) Gravity
             // ---------------------------------------------------------
             if (!_isOnGround)
             {
                 _velocity.Y += _gravity * dt;
-                _velocity.Y = Math.Min(_velocity.Y, _maxYVelovity);
+                _velocity.Y = Math.Min(_velocity.Y, _maxYVelocity);
             }
             else
             {
-                _velocity.Y = 0; // WICHTIG: verhindert das Flackern
+                _velocity.Y = 0;
             }
-
-            Derbug.SetText(_isOnGround.ToString() + " | " + _jumpsLeft.ToString() + " | " + ((int)_velocity.Y).ToString());
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        // ---------------------------------------------------------
+        //  TILE COLLISION (lokale Koordinaten!)
+        // ---------------------------------------------------------
+        private Tile GetCollidingTileLocal(Tilemap map, Vector2 offset, Rectangle? customRect = null)
         {
-            spriteBatch.Draw(_texture, _position, null, Color.White, 0f, Vector2.Zero, new Vector2(.5f,1), SpriteEffects.None, 0);
+            Rectangle worldRect = customRect ?? Collider;
 
-        }
+            // Welt → lokale Screen-Koordinaten
+            Rectangle localRect = new Rectangle(
+                (int)(worldRect.X - offset.X),
+                (int)(worldRect.Y - offset.Y),
+                worldRect.Width,
+                worldRect.Height
+            );
 
-        private Tile GetCollidingTile(Rectangle rect, Tilemap map)
-        {
-            foreach (var tile in map.GetNearbyTiles(rect))
+            foreach (var tile in map.GetNearbyTiles(localRect))
             {
-                if (tile.IsSolid && rect.Intersects(tile.Collider))
+                if (tile.IsSolid && localRect.Intersects(tile.Collider))
                     return tile;
             }
 
             return null;
         }
 
-
+        public override void Draw(SpriteBatch spriteBatch)
+        {
+            spriteBatch.Draw(_texture, Position, null, Color.White, 0f, Vector2.Zero, new Vector2(.5f, 1), SpriteEffects.None, 0);
+        }
     }
 }
