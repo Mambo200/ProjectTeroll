@@ -10,13 +10,14 @@ namespace Teroll.Objects
 {
     public class MovingPlatform : GameObject
     {
-        private ColliderComponent collider;
+        public ColliderComponent collider;
         private ScriptComponent script;
+        public Vector2 PreviousPosition;
 
         public MovingPlatform(Vector2 startPos)
         {
             Position = startPos;
-
+            PreviousPosition = startPos;
             collider = new ColliderComponent(this, 32, 8);
             script = new ScriptComponent
             {
@@ -31,13 +32,14 @@ namespace Teroll.Objects
 
         public override void Update(GameTime gameTime, Level level)
         {
+            PreviousPosition = Position;
             collider.Update(gameTime, level);
             script.Update(gameTime, level);
         }
 
         public override void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(TextureLibrary.Platform, Position, Color.White);
+            spriteBatch.Draw(Helper.TextureLibrary.Platform, Position, Color.White);
         }
     }
 }

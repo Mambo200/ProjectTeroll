@@ -45,6 +45,9 @@ namespace Teroll.Worlds
             foreach (var e in GlobalEntities)
                 e.Update(gameTime, this);
 
+            foreach (var obj in ActiveScreen.Objects)
+                obj.Update(gameTime, this);
+
             TryScreenTransition(Game1.Get.Player);
         }
 
@@ -72,6 +75,10 @@ namespace Teroll.Worlds
 
             foreach (var e in GlobalEntities)
                 e.Draw(spriteBatch);
+
+            foreach (var obj in ActiveScreen.Objects)
+                obj.Draw(spriteBatch);
+
         }
 
         public void TryScreenTransition(Player player)

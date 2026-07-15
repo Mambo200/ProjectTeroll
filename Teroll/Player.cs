@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using Teroll.Entitys;
+using Teroll.Objects;
 using Teroll.Tiles;
 using Teroll.Worlds;
 
@@ -28,10 +29,12 @@ namespace Teroll
         private float _gravity = 900f;
         private float _maxYVelocity = 500f;
         private float _jumpStrength = -350f;
+        public int snapDistance = 3;
 
+        private bool _isOnPlatform = false;
         private bool _isOnGround = false;
         private int _jumpsLeft = 2;
-        public int maxJumpsAvailable = 2;
+        public int maxJumpsAvailable = 5;
 
         public Player(Texture2D texture, Vector2 startPos)
         {
@@ -120,14 +123,16 @@ namespace Teroll
             // ---------------------------------------------------------
             Position.Y += _velocity.Y * dt;
 
+            _isOnGround = false;        // WICHTIG: Reset hier
+            _isOnPlatform = false;      // WICHTIG: Reset hier
+
             var tileY = GetCollidingTileLocal(map, screenOffset);
             if (tileY != null)
             {
                 if (_velocity.Y > 0)
                 {
                     Position.Y = tileY.Collider.Top + screenOffset.Y - Collider.Height;
-                    _isOnGround = true;
-                    _jumpsLeft = maxJumpsAvailable;
+                    HitGround();
                 }
                 else if (_velocity.Y < 0)
                 {
@@ -138,8 +143,7 @@ namespace Teroll
             }
             else
             {
-                const int snapDistance = 3;
-
+                // SnapDistance für Tiles
                 Rectangle probe = Collider;
                 probe.Y += snapDistance;
 
@@ -148,22 +152,48 @@ namespace Teroll
                 if (snapTile != null && _velocity.Y >= 0)
                 {
                     Position.Y = snapTile.Collider.Top + screenOffset.Y - Collider.Height;
-                    _isOnGround = true;
-                    _velocity.Y = 0;
-                    _jumpsLeft = maxJumpsAvailable;
-                }
-                else
-                {
-                    if (_isOnGround)
-                        _jumpsLeft--;
-                    _isOnGround = false;
+                    HitGround();
                 }
             }
 
             // ---------------------------------------------------------
-            // 3) Gravity
+            // 3) Object collision check (MovingPlatform)
             // ---------------------------------------------------------
-            if (!_isOnGround)
+            var obj = GetCollidingObject(Game1.Get.testLevel);
+
+            if (obj is MovingPlatform platform)
+            {
+                _isOnPlatform = true;
+                Position.Y = platform.Position.Y - Collider.Height;
+                _velocity.Y = 0;
+                _isOnGround = true;
+
+                Position.X += platform.Position.X - platform.PreviousPosition.X;
+            }
+            else
+            {
+                // SnapDistance für Plattformen
+                Rectangle probe = Collider;
+                probe.Y += snapDistance;
+
+                var snapPlatform = GetCollidingObject(Game1.Get.testLevel, probe);
+
+                if (snapPlatform is MovingPlatform mp && _velocity.Y >= 0)
+                {
+                    _isOnPlatform = true;
+                    Position.Y = mp.Position.Y - Collider.Height;
+                    _velocity.Y = 0;
+                    _isOnGround = true;
+                    _jumpsLeft = maxJumpsAvailable;
+
+                    Position.X += mp.Position.X - mp.PreviousPosition.X;
+                }
+            }
+
+            // ---------------------------------------------------------
+            // 4) Gravity
+            // ---------------------------------------------------------
+            if (!_isOnGround && !_isOnPlatform)
             {
                 _velocity.Y += _gravity * dt;
                 _velocity.Y = Math.Min(_velocity.Y, _maxYVelocity);
@@ -172,6 +202,8 @@ namespace Teroll
             {
                 _velocity.Y = 0;
             }
+
+            Derbug.SetText(_jumpsLeft.ToString());
         }
 
         // ---------------------------------------------------------
@@ -196,6 +228,41 @@ namespace Teroll
             }
 
             return null;
+        }
+
+        private GameObject GetCollidingObject(Level level)
+        {
+            foreach (var obj in level.ActiveScreen.Objects)
+            {
+                if (obj is MovingPlatform platform)
+                {
+                    if (Collider.Intersects(platform.collider.Bounds))
+                        return obj;
+                }
+            }
+
+            return null;
+        }
+        private GameObject GetCollidingObject(Level level, Rectangle rect)
+        {
+            foreach (var obj in level.ActiveScreen.Objects)
+            {
+                if (obj is MovingPlatform platform)
+                {
+                    if (rect.Intersects(platform.collider.Bounds))
+                        return obj;
+                }
+            }
+
+            return null;
+        }
+
+
+        public void HitGround()
+        {
+            _isOnGround = true;
+            _velocity.Y = 0;
+            _jumpsLeft = maxJumpsAvailable;
         }
 
         public override void Draw(SpriteBatch spriteBatch)

@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using Teroll.Objects;
 using Teroll.Tiles;
 using Teroll.Worlds;
 
@@ -20,6 +21,8 @@ namespace Teroll
 
         private Texture2D _testTile;
         public Level testLevel;
+
+
 
 #if DEBUG
         private SpriteFont _debugFont;
@@ -215,6 +218,7 @@ namespace Teroll
 
 
 
+
             int[,] level =
             {
                 { 1, 1,1, 1,1, 1,1, 1,0, 1,1, 1,0, 0,0, 1,1, 1,1, 1,1, 1,1, 1,1 },
@@ -239,6 +243,7 @@ namespace Teroll
             };
             _map = new Tilemap(level);
 
+
             base.Initialize();
         }
 
@@ -256,6 +261,8 @@ namespace Teroll
             _debugFont = Content.Load<SpriteFont>("Derbug\\DebugFont");
             Derbug.Init(_spriteBatch, _debugFont);
 #endif
+
+            testLevel.ActiveScreen.Objects.Add(new MovingPlatform(new Vector2(200, 500)));
 
         }
 
@@ -276,6 +283,7 @@ namespace Teroll
             //Player.Update(gameTime, _map);
             Player.Update(gameTime, testLevel);
             testLevel.Update(gameTime);
+
 
             base.Update(gameTime);
         }
@@ -315,6 +323,7 @@ namespace Teroll
             //Derbug.SetText(currentFPS.ToString());
             Derbug.Draw();
 #endif
+            
 
             _spriteBatch.End();
 
