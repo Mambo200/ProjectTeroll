@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using Teroll.Entitys;
+using Teroll.Objects;
 using Teroll.Tiles;
 
 namespace Teroll.Worlds
@@ -11,7 +12,7 @@ namespace Teroll.Worlds
     {
         public Tilemap Tilemap;
         public List<Entity> LocalEntities = new List<Entity>();
-
+        public List<GameObject> Objects = new();
         public bool IsDynamicSize = false; // Standard: statisch
         public Vector2 CameraPosition = Vector2.Zero;
 
