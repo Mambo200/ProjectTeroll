@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Runtime.Remoting;
 using Teroll.Entitys;
 using Teroll.Objects;
 using Teroll.Tiles;
@@ -23,6 +24,8 @@ namespace Teroll
         private Vector2 _velocity;
 
         private bool _jumpPressedLastFrame = false;
+
+        private Vector2 _previousPosition;
 
         private float _moveSpeed = 200f;
         private float _slowSpeed = 100f;
@@ -47,6 +50,8 @@ namespace Teroll
         // ---------------------------------------------------------
         public override void Update(GameTime gameTime, Level level)
         {
+            _previousPosition = Position;
+
             Tilemap map = level.ActiveScreen.Tilemap;
 
             Vector2 screenOffset = new Vector2(
@@ -157,27 +162,59 @@ namespace Teroll
             }
 
             // ---------------------------------------------------------
-            // 3) Object collision check (MovingPlatform)
+            // 3) Object collision check (MovingPlatform + Object)
             // ---------------------------------------------------------
             var obj = GetCollidingObject(Game1.Get.testLevel);
 
-            if (obj is MovingPlatform platform)
+            if (obj != null)
             {
-                _isOnPlatform = true;
-                Position.Y = platform.Position.Y - Collider.Height;
-                _velocity.Y = 0;
-                _isOnGround = true;
+                
+                if (_velocity.X > 0 &&
+                    CanHitLeft(obj) &&
+                    obj.Position.X > Position.X)
+                {
+                    Position.X =
+                        obj.Collider.Left -
+                        Collider.Width;
 
-                Position.X += platform.Position.X - platform.PreviousPosition.X;
+                    _velocity.X = 0;
+                }
+
+                else if (_velocity.X < 0 &&
+                    CanHitRight(obj))
+                {
+                    Position.X =
+                        obj.Collider.Right;
+
+                    _velocity.X = 0;
+                }
+
+                else if (_velocity.Y > 0 && CanHitTop(obj))
+                {
+                    Position.Y =
+                        obj.Collider.Top - obj.Collider.Height;
+
+                    _velocity.Y = 0;
+                }
+                else if (_velocity.Y < 0 && CanHitBottom(obj))
+                {
+                    Position.Y =
+                        obj.Collider.Bottom;
+
+                    _velocity.Y = 0;
+                }
+
+
+
             }
             else
             {
                 // SnapDistance für Plattformen
                 Rectangle probe = Collider;
                 probe.Y += snapDistance;
-
+                
                 var snapPlatform = GetCollidingObject(Game1.Get.testLevel, probe);
-
+                
                 if (snapPlatform is MovingPlatform mp && _velocity.Y >= 0)
                 {
                     _isOnPlatform = true;
@@ -185,10 +222,12 @@ namespace Teroll
                     _velocity.Y = 0;
                     _isOnGround = true;
                     _jumpsLeft = maxJumpsAvailable;
-
+                
                     Position.X += mp.Position.X - mp.PreviousPosition.X;
                 }
             }
+
+
 
             // ---------------------------------------------------------
             // 4) Gravity
@@ -234,11 +273,8 @@ namespace Teroll
         {
             foreach (var obj in level.ActiveScreen.Objects)
             {
-                if (obj is MovingPlatform platform)
-                {
-                    if (Collider.Intersects(platform.collider.Bounds))
-                        return obj;
-                }
+                if (Collider.Intersects(obj.Collider))
+                    return obj;
             }
 
             return null;
@@ -247,16 +283,12 @@ namespace Teroll
         {
             foreach (var obj in level.ActiveScreen.Objects)
             {
-                if (obj is MovingPlatform platform)
-                {
-                    if (rect.Intersects(platform.collider.Bounds))
-                        return obj;
-                }
+                if (rect.Intersects(obj.Collider))
+                    return obj;
             }
 
             return null;
         }
-
 
         public void HitGround()
         {
@@ -268,6 +300,22 @@ namespace Teroll
         public override void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(_texture, Position, null, Color.White, 0f, Vector2.Zero, new Vector2(.5f, 1), SpriteEffects.None, 0);
+        }
+
+        private bool CanLandOn(GameObject obj)
+        {
+            if (!obj.CollisionSides.HasFlag(CollisionSide.Top))
+                return false;
+
+            Rectangle previousCollider =
+                new Rectangle(
+                    (int)_previousPosition.X,
+                    (int)_previousPosition.Y,
+                    Collider.Width,
+                    Collider.Height);
+
+            return previousCollider.Bottom <= obj.Collider.Top
+                   && _velocity.Y >= 0;
         }
     }
 }

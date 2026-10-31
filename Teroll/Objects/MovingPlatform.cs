@@ -14,6 +14,14 @@ namespace Teroll.Objects
         private ScriptComponent script;
         public Vector2 PreviousPosition;
 
+        public override Rectangle Collider =>
+            new Rectangle(
+                (int)Position.X,
+                (int)Position.Y,
+                32,
+                8
+            );
+
         public MovingPlatform(Vector2 startPos)
         {
             Position = startPos;

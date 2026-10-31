@@ -241,7 +241,7 @@ namespace Teroll
                 { 1, 1,1, 1,1, 1,1, 1,0, 1,1, 1,0, 0,0, 1,1, 1,1, 1,1, 1,1, 1,1 },
                 { 1, 1,1, 1,1, 1,1, 1,0, 1,1, 1,0, 0,0, 1,1, 1,1, 1,1, 1,1, 1,1 }
             };
-            _map = new Tilemap(level);
+            //_map = new Tilemap(level);
 
 
             base.Initialize();
@@ -263,6 +263,11 @@ namespace Teroll
 #endif
 
             testLevel.ActiveScreen.Objects.Add(new MovingPlatform(new Vector2(200, 500)));
+            var block = new TestBlock(new Vector2(400, 500));
+            //block.CollisionSides = CollisionSide.Left | CollisionSide.Right | CollisionSide.Bottom | CollisionSide.Top;
+            block.CollisionSides = CollisionSide.All;
+            testLevel.ActiveScreen.Objects.Add(block);
+            //testLevel.ActiveScreen.Tilemap.Tiles[10,5] =  new SolidTile(300,300);
 
         }
 
