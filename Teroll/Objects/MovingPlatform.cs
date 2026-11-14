@@ -47,7 +47,7 @@ namespace Teroll.Objects
 
         public override void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Helper.TextureLibrary.Platform, Position, Color.White);
+            spriteBatch.Draw(Helper.TextureLibrary.Platform, Position, null, Color.White, 0f, Vector2.Zero, new Vector2(1, .5f), SpriteEffects.None, 0);
         }
     }
 }

@@ -123,6 +123,9 @@ namespace Teroll
                 _velocity.X = 0;
             }
 
+            // Horizontal: GameObjects (nur Achse X, nur nach der X-Bewegung)
+            ResolveObjectsHorizontal(Game1.Get.testLevel);
+
             // ---------------------------------------------------------
             // 2) Vertical Movement
             // ---------------------------------------------------------
@@ -162,72 +165,9 @@ namespace Teroll
             }
 
             // ---------------------------------------------------------
-            // 3) Object collision check (MovingPlatform + Object)
+            // 3) Vertical: GameObjects (nur Achse Y, nur nach der Y-Bewegung)
             // ---------------------------------------------------------
-            var obj = GetCollidingObject(Game1.Get.testLevel);
-
-            if (obj != null)
-            {
-                
-                if (_velocity.X > 0 &&
-                    CanHitLeft(obj) &&
-                    obj.Position.X > Position.X)
-                {
-                    Position.X =
-                        obj.Collider.Left -
-                        Collider.Width;
-
-                    _velocity.X = 0;
-                }
-
-                else if (_velocity.X < 0 &&
-                    CanHitRight(obj))
-                {
-                    Position.X =
-                        obj.Collider.Right;
-
-                    _velocity.X = 0;
-                }
-
-                else if (_velocity.Y > 0 && CanHitTop(obj))
-                {
-                    Position.Y =
-                        obj.Collider.Top - obj.Collider.Height;
-
-                    _velocity.Y = 0;
-                }
-                else if (_velocity.Y < 0 && CanHitBottom(obj))
-                {
-                    Position.Y =
-                        obj.Collider.Bottom;
-
-                    _velocity.Y = 0;
-                }
-
-
-
-            }
-            else
-            {
-                // SnapDistance für Plattformen
-                Rectangle probe = Collider;
-                probe.Y += snapDistance;
-                
-                var snapPlatform = GetCollidingObject(Game1.Get.testLevel, probe);
-                
-                if (snapPlatform is MovingPlatform mp && _velocity.Y >= 0)
-                {
-                    _isOnPlatform = true;
-                    Position.Y = mp.Position.Y - Collider.Height;
-                    _velocity.Y = 0;
-                    _isOnGround = true;
-                    _jumpsLeft = maxJumpsAvailable;
-                
-                    Position.X += mp.Position.X - mp.PreviousPosition.X;
-                }
-            }
-
-
+            ResolveObjectsVertical(Game1.Get.testLevel);
 
             // ---------------------------------------------------------
             // 4) Gravity
@@ -267,6 +207,79 @@ namespace Teroll
             }
 
             return null;
+        }
+
+        // ---------------------------------------------------------
+        //  OBJEKT-KOLLISION, pro Achse getrennt
+        // ---------------------------------------------------------
+        private void ResolveObjectsHorizontal(Level level)
+        {
+            if (_velocity.X == 0)
+                return;
+
+            foreach (var obj in level.ActiveScreen.Objects)
+            {
+                if (!Collider.Intersects(obj.Collider))
+                    continue;
+
+                if (_velocity.X > 0 && CanHitLeft(obj))
+                {
+                    Position.X = obj.Collider.Left - Collider.Width;
+                    _velocity.X = 0;
+                }
+                else if (_velocity.X < 0 && CanHitRight(obj))
+                {
+                    Position.X = obj.Collider.Right;
+                    _velocity.X = 0;
+                }
+            }
+        }
+
+        private void ResolveObjectsVertical(Level level)
+        {
+            bool collided = false;
+
+            foreach (var obj in level.ActiveScreen.Objects)
+            {
+                if (!Collider.Intersects(obj.Collider))
+                    continue;
+
+                if (_velocity.Y > 0 && CanHitTop(obj))
+                {
+                    Position.Y = obj.Collider.Top - Collider.Height;
+                    HitGround();
+                    collided = true;
+                }
+                else if (_velocity.Y < 0 && CanHitBottom(obj))
+                {
+                    Position.Y = obj.Collider.Bottom;
+                    _velocity.Y = 0;
+                    collided = true;
+                }
+            }
+
+            if (collided || _velocity.Y < 0)
+                return;
+
+            // SnapDistance: kleine Lücke nach unten überbrücken (Blöcke + Plattformen)
+            Rectangle probe = Collider;
+            probe.Y += snapDistance;
+
+            foreach (var obj in level.ActiveScreen.Objects)
+            {
+                if (!probe.Intersects(obj.Collider) || !CanHitTop(obj))
+                    continue;
+
+                Position.Y = obj.Collider.Top - Collider.Height;
+                HitGround();
+
+                if (obj is MovingPlatform mp)
+                {
+                    _isOnPlatform = true;
+                    Position.X += mp.Position.X - mp.PreviousPosition.X;
+                }
+                break;
+            }
         }
 
         private GameObject GetCollidingObject(Level level)
