@@ -14,6 +14,14 @@ namespace Teroll.Objects
         private ScriptComponent script;
         public Vector2 PreviousPosition;
 
+        public override Rectangle Collider =>
+            new Rectangle(
+                (int)Position.X,
+                (int)Position.Y,
+                32,
+                8
+            );
+
         public MovingPlatform(Vector2 startPos)
         {
             Position = startPos;
@@ -39,7 +47,7 @@ namespace Teroll.Objects
 
         public override void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(Helper.TextureLibrary.Platform, Position, Color.White);
+            spriteBatch.Draw(Helper.TextureLibrary.Platform, Position, null, Color.White, 0f, Vector2.Zero, new Vector2(1, .5f), SpriteEffects.None, 0);
         }
     }
 }

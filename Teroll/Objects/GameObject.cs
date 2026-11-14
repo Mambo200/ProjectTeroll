@@ -12,6 +12,14 @@ namespace Teroll.Objects
         public Vector2 Position;
         public bool IsActive = true;
 
+        public virtual Rectangle Collider =>
+            Rectangle.Empty;
+
+        public CollisionSide CollisionSides { get; set; }
+            = CollisionSide.All;
+
+        
+
         public virtual void Update(GameTime gameTime, Level level) { }
         public virtual void Draw(SpriteBatch spriteBatch) { }
     }
